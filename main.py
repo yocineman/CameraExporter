@@ -468,6 +468,7 @@ class GUI(MayaQWidgetBaseMixin, QtWidgets.QMainWindow):
         if result is False:
             return False
         # export
+        
         result = self.export()
         if result:
             cmds.inViewMessage(amg='Bake and Export finished', pos='botLeft', fade=True, fot=2000)
@@ -705,7 +706,11 @@ def bake_main(**kwargs):
 
     unlock_current_layer()
     # shapeAttrs = ['fl','hfa','vfa','lsr','fs','fd','sa','coi','ncp','fcp', 'locatorScale', 'centerOfInterest', 'rotateOrder']
-    shapeAttrs = ['fl']
+    shapeAttrs = ['fl',
+                  'horizontalFilmAperture', 'verticalFilmAperture',
+                  'filmFit', 'filmFitOffset',
+                  'nearClipPlane', 'farClipPlane']
+
     result_cams = []
     from_cam = []
     to_cam = []
@@ -784,7 +789,10 @@ def bake_main(**kwargs):
                 #     camScale = cmds.getAttr(from_cam[i]+'.cameraScale')
                 #     cmds.setKeyframe(to_cam[i],t=cmds.currentTime(q=True), v=camScale, at='.cs')
                 for thisAttr in shapeAttrs:
-                    cmds.setKeyframe(to_cam[i],t=cmds.currentTime(q=True), v=cmds.getAttr(from_cam[i]+'.'+thisAttr), at='.'+thisAttr)
+                    try:
+                        cmds.setKeyframe(to_cam[i],t=cmds.currentTime(q=True), v=cmds.getAttr(from_cam[i]+'.'+thisAttr), at='.'+thisAttr)
+                    except Exception as e:
+                        print(e)
 
     # lock
     for i in range(len(to_cam)):
@@ -800,7 +808,10 @@ def bake_main(**kwargs):
         cmds.setAttr(to_cam[i]+'.rotateAxisZ', cmds.getAttr(from_cam[i]+'.rotateAxisZ'))
 
         for thisAttr in shapeAttrs:
-            cmds.setAttr(to_cam[i]+'.'+thisAttr,lock=True)
+            try:
+                cmds.setAttr(to_cam[i]+'.'+thisAttr,lock=True)
+            except:
+                pass
         unlock_list = ['.cs', '.ncp', '.fcp','.lls']
         for thisAttr in unlock_list:
             cmds.setAttr(to_cam[i]+thisAttr,lock=False)
